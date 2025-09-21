@@ -1,0 +1,4 @@
+tkintertools
+psutil
+requests
+tk
