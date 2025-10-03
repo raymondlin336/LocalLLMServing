@@ -1,4 +1,9 @@
+# Required python packages to launch the app
+
 tkintertools
-psutil
+sys
+tkinter
 requests
-tk
+json
+base64
+psutil
