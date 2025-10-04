@@ -1,0 +1,23 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "Get the weather for a location at a specific time.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "City or place name, e.g., 'Toronto, Canada'."
+          },
+          "time": {
+            "type": "string",
+            "description": "Time for which to get the weather, e.g., 'now', 'tomorrow', or '2025-10-05 09:00'."
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  }
+]

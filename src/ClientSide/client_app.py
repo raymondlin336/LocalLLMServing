@@ -42,7 +42,7 @@ class ClientApp(tk.Tk):
         header = ttk.Label(self, text="Query", font=("Segoe UI", 11, "bold"))
         header.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 10))
 
-        self.model_dropdown = ttk.Combobox(row1, values=["llama3.2-vision:11b", "deepseek-r1:7b", "deepseek-r1:14b", "qwen3:14b"])
+        self.model_dropdown = ttk.Combobox(row1, values=[])
         self.model_dropdown.grid(row=1, column=0, sticky="ew", padx=(10, 10), pady=10)
         self.model_dropdown.bind("<<ComboboxSelected>>", self.set_model)
 
@@ -66,6 +66,9 @@ class ClientApp(tk.Tk):
         self.after(100, lambda: (self.search_bar.focus_set(), self.search_bar.icursor("end")))
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def load_potential_models(self, model_list: list[str]):
+        self.model_dropdown["values"] = model_list
 
     def set_model(self, event=None):
         self.send_and_receive.set_model(self.model_dropdown.get())

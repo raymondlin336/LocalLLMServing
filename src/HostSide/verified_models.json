@@ -1,0 +1,22 @@
+[
+  {
+    "Model Tag": "llama3.2-vision:11b",
+    "Image Compatibility": true,
+    "Function Compatibility": false
+  },
+  {
+    "Model Tag": "deepseek-r1:7b",
+    "Image Compatibility": false,
+    "Function Compatibility": false
+  },
+  {
+    "Model Tag": "deepseek-r1:14b",
+    "Image Compatibility": false,
+    "Function Compatibility": false
+  },
+  {
+    "Model Tag": "qwen3:14b",
+    "Image Compatibility": false,
+    "Function Compatibility": true
+  }
+]
