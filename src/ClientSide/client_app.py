@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import requests
 import json
-from src.Client_Host_Link.send_and_receive import SendAndReceive
+from src.Client_Host_Link.router import Router
 
 class ClientApp(tk.Tk):
     def __init__(self, url):
@@ -15,7 +15,7 @@ class ClientApp(tk.Tk):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(4, weight=1)
 
-        self.send_and_receive = SendAndReceive()
+        self.send_and_receive = Router()
 
         # (Optional) make text crisp on high-DPI Windows displays
         if sys.platform.startswith("win"):
@@ -42,7 +42,7 @@ class ClientApp(tk.Tk):
         header = ttk.Label(self, text="Query", font=("Segoe UI", 11, "bold"))
         header.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 10))
 
-        self.model_dropdown = ttk.Combobox(row1, values=["llama3.2-vision:11b", "deepseek-r1:7b", "deepseek-r1:14b"])
+        self.model_dropdown = ttk.Combobox(row1, values=["llama3.2-vision:11b", "deepseek-r1:7b", "deepseek-r1:14b", "qwen3:14b"])
         self.model_dropdown.grid(row=1, column=0, sticky="ew", padx=(10, 10), pady=10)
         self.model_dropdown.bind("<<ComboboxSelected>>", self.set_model)
 
@@ -70,7 +70,7 @@ class ClientApp(tk.Tk):
     def set_model(self, event=None):
         self.send_and_receive.set_model(self.model_dropdown.get())
 
-    def set_send_and_receive(self, sar: SendAndReceive):
+    def set_send_and_receive(self, sar: Router):
         self.send_and_receive = sar
 
     def send_request(self, event=None):
@@ -91,7 +91,7 @@ class ClientApp(tk.Tk):
         self.search_bar.delete(0, "end")
         self.img_bar.delete(0, "end")
 
-    def link_to_send_and_receive(self, sar: SendAndReceive):
+    def link_to_send_and_receive(self, sar: Router):
         self.send_and_receive = sar
 
     def get_text(self) -> str:

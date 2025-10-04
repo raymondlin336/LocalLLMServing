@@ -3,7 +3,8 @@ import psutil
 import requests
 import json
 
-class SendAndReceive:
+
+class Router:
     def __init__(self, url=""):
         self.message_history = []
         self.selected_model = None
@@ -42,11 +43,11 @@ class SendAndReceive:
             "keep_alive": 3600
         }
 
-        #print(payload)
+        # print(payload)
 
         self.message_history.append({"role": "assistant", "content": ""})
         with requests.post(f"{self.url}/api/chat", json=payload, stream=True) as response:
-            #print(response.status_code)
+            # print(response.status_code)
             for line in response.iter_lines(decode_unicode=True):
                 data = json.loads(line)
                 self.message_history[-1]["content"] += data["message"]["content"]
@@ -72,7 +73,8 @@ class SendAndReceive:
         print("==================== Model Testing")
         payload = {
             "model": self.selected_model,
-            "messages": [{"role": "user", "content": "You are a large language model. The next line will be a user starting a conversation with you, maybe asking a question, etc."}],
+            "messages": [{"role": "user",
+                          "content": "You are a large language model. The next line will be a user starting a conversation with you, maybe asking a question, etc."}],
             "stream": True,
             "options": {
                 "num_predict": -1
@@ -80,7 +82,7 @@ class SendAndReceive:
             "keep_alive": 3600
         }
         r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
-        #print(r.status_code)
+        # print(r.status_code)
         if r.ok:
             print("Model receives requests correctly.")
         else:
