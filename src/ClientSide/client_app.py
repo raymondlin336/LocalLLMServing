@@ -14,8 +14,7 @@ class ClientApp(tk.Tk):
         self.minsize(420, 120)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(4, weight=1)
-
-        self.send_and_receive = Router()
+        self.router = Router()
 
         # (Optional) make text crisp on high-DPI Windows displays
         if sys.platform.startswith("win"):
@@ -71,10 +70,10 @@ class ClientApp(tk.Tk):
         self.model_dropdown["values"] = model_list
 
     def set_model(self, event=None):
-        self.send_and_receive.set_model(self.model_dropdown.get())
+        self.router.set_model(self.model_dropdown.get())
 
-    def set_send_and_receive(self, sar: Router):
-        self.send_and_receive = sar
+    def set_router(self, sar: Router):
+        self.router = sar
 
     def send_request(self, event=None):
         text = self.get_text()
@@ -89,13 +88,13 @@ class ClientApp(tk.Tk):
         print("==================== RESPONSE")
         self.clear_text()
 
-        self.send_and_receive.send_request_to_model(text, img)
+        self.router.send_request_to_model(text, img)
 
         self.search_bar.delete(0, "end")
         self.img_bar.delete(0, "end")
 
     def link_to_send_and_receive(self, sar: Router):
-        self.send_and_receive = sar
+        self.router = sar
 
     def get_text(self) -> str:
         return self.search_bar.get().strip()
@@ -113,18 +112,7 @@ class ClientApp(tk.Tk):
 
     def on_close(self):
         print("Client app is closed.")
-        payload = {"model": self.send_and_receive.selected_model, "keep_alive": 0}
-        r = requests.post(f"{self.send_and_receive.url}/api/generate", json=payload, timeout=1000)
+        payload = {"model": self.router.selected_model, "keep_alive": 0}
+        r = requests.post(f"{self.router.url}/api/generate", json=payload, timeout=1000)
         print("Model unloaded.")
         self.destroy()
-
-def check_available_models(url="http://100.68.67.70:11434/api/tags"):
-    with requests.get(url, timeout=1000) as response:
-        for line in response.iter_lines(decode_unicode=True):
-            for model in json.loads(line)["models"]:
-                print(model["name"], model["size"])
-
-def remove_model(model_name, url):
-    payload = {"model": model_name}
-    r = requests.delete(f"{url}/api/delete", json=payload, timeout=1000)
-    print(r.text)

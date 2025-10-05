@@ -6,7 +6,7 @@ from src.HostSide.llm_model import Model
 app = ClientApp("http://100.68.67.70:11434")
 router = RouterF("http://100.68.67.70:11434")
 verified_model_list, verified_model_names = Model.load_verified_models()
-app.set_send_and_receive(router)
+app.set_router(router)
 app.load_potential_models(verified_model_names)
 router.set_client_app(app)
 app.mainloop()

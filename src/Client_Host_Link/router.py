@@ -2,7 +2,7 @@ import base64
 import psutil
 import requests
 import json
-
+from src.HostSide.llm_model import Model
 
 class Router:
     def __init__(self, url=""):
@@ -106,3 +106,18 @@ class Router:
                     print(f"Loading model: {completed}/{total}, {round(completed / total * 100)}%")
                 if line_dict["status"] == "success":
                     print("Model loaded successfully.")
+
+    def check_available_models(self):
+        with requests.get(f"{self.url}/api/tags", timeout=1000) as response:
+            for line in response.iter_lines(decode_unicode=True):
+                for model in json.loads(line)["models"]:
+                    print(model["name"], model["size"])
+
+    def remove_model(self, model_name: str):
+        _, models = Model.load_verified_models()
+        if model_name in models:
+            payload = {"model": model_name}
+            r = requests.delete(f"{self.url}/api/delete", json=payload, timeout=1000)
+            print(r.text)
+        else:
+            print("The chosen model is not currently installed.")

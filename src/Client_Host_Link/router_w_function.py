@@ -10,7 +10,18 @@ class RouterF(Router):
         self.tools = json.load(open(tools_path))
 
     def send_request_to_model(self, request, img):
-        self.send_first_req(request, img)
+        r, calls = self.send_first_req(request, img)
+        if calls == []:
+            self.client_app.append_and_show_text(json.loads(r.text)["message"]["content"])
+            # for line in r.iter_lines(decode_unicode=True):
+            #     data = json.loads(line)
+            #     self.message_history[-1]["content"] += data["message"]["content"]
+            #     if data["message"]["content"] != "" and "<" != data["message"]["content"][0]:
+            #         self.client_app.append_and_show_text(data["message"]["content"])
+            #         print(data["message"]["content"], end="")
+            # print()
+        else:
+            self.send_second_req(calls)
 
     def send_first_req(self, request, img):
         img_path = img.replace("\\", "/")
@@ -37,23 +48,21 @@ class RouterF(Router):
         r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
         calls = []
         if "tool_calls" in json.loads(r.text)["message"]:
-            print("Tool called.")
+            print("---------- Function tool called")
             for call in json.loads(r.text)["message"]["tool_calls"]:
                 call_object = FunctionTool(call["function"]["name"], call["function"]["arguments"])
                 calls.append(call_object)
                 call_object.run()
 
-        if calls != []:
-            self.send_second_req(request, img, calls)
-        else:
-            self.client_app.append_and_show_text(json.loads(r.text)["message"]["content"])
+        return r, calls
 
-    def send_second_req(self, request, img, calls):
-        self.message_history.append({"role": "tool", "tool_name": "get_weather", "content": "Toronto is 20C today."})
+    def send_second_req(self, calls):
+        for call in calls:
+            self.message_history.append({"role": "tool", "tool_name": "get_weather", "content": call.run()})
         payload = {
             "model": self.selected_model,
             "messages": self.message_history,
-            "stream": False,
+            "stream": True,
             "options": {
                 "num_predict": -1
             },
@@ -61,6 +70,12 @@ class RouterF(Router):
             "tools": self.tools
         }
         self.message_history.append({"role": "assistant", "content": ""})
-        r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
-        print(json.loads(r.text)["message"]["content"])
-        self.client_app.append_and_show_text(json.loads(r.text)["message"]["content"])
+        with requests.post(f"{self.url}/api/chat", json=payload, stream=True) as response:
+            for line in response.iter_lines(decode_unicode=True):
+                data = json.loads(line)
+                self.message_history[-1]["content"] += data["message"]["content"]
+                if data["message"]["content"] != "" and "<" != data["message"]["content"][0]:
+                    self.client_app.append_and_show_text(data["message"]["content"])
+                    print(data["message"]["content"], end="")
+
+        print()
