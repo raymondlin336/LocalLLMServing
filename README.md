@@ -1,4 +1,4 @@
-# LocalLLMServing
+# LocalLLMServing (outdated)
 
 Set up:
 
