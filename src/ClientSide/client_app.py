@@ -87,6 +87,7 @@ class ClientApp(tk.Tk):
             print(f"Image: {img}")
         print("==================== RESPONSE")
         self.clear_text()
+        print(f"Text:{text}")
 
         self.router.send_request_to_model(text, img)
 
