@@ -6,7 +6,7 @@ import json
 from src.Client_Host_Link.send_and_receive import SendAndReceive
 
 class ClientApp(tk.Tk):
-    def __init__(self, url):
+    def __init__(self):
         # General setup
         super().__init__()
         self.title("Local Helper") # App name
