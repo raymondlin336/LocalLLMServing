@@ -48,21 +48,21 @@ class ClientApp(tk.Tk):
         self.ip_dropdown = ttk.Combobox(
             row0,
             values=self._detect_local_ips(),
-            state="readonly",
+            state="normal",  # <— allow typing custom IP / DNS
             width=24,
         )
         # default to loopback; you can override below in launch_app.py too
-        if "127.0.0.1" in self.ip_dropdown["values"]:
-            self.ip_dropdown.set("127.0.0.1")
-        elif self.ip_dropdown["values"]:
-            self.ip_dropdown.current(0)
+        self.ip_dropdown.set("127.0.0.1")
         self.ip_dropdown.grid(row=0, column=1, sticky="w", padx=(0, 10))
         self.ip_dropdown.bind("<<ComboboxSelected>>", self.apply_host)
+        self.ip_dropdown.bind("<Return>", self.apply_host)  # <— Enter to apply
 
         ttk.Label(row0, text="Port:").grid(row=0, column=2, sticky="w", padx=(0, 6))
-        self.port_entry = ttk.Entry(row0, width=8)
+        self.port_entry = ttk.Entry(row0, width=8, validate="key")
         self.port_entry.insert(0, "11434")
         self.port_entry.grid(row=0, column=3, sticky="w")
+        self.bind_btn = ttk.Button(row0, text="Set Host", command=self.apply_host)
+        self.bind_btn.grid(row=0, column=4, sticky="w", padx=(10, 0))
         # Button to apply / (re)bind URL
         self.bind_btn = ttk.Button(row0, text="Set Host", command=self.apply_host)
         self.bind_btn.grid(row=0, column=4, sticky="w", padx=(10, 0))
