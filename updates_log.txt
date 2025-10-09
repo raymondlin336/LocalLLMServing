@@ -1,0 +1,5 @@
+Branch: Function Calling
+Commit: -
+ - Added verified_models.json so the list of models that the users can choose in the UI from is directly picked from here.
+ - Added an actual valid function calling: real time weather []
+ - Modified UI so checkbox for funciton calling appears when the chosen model supports it []
