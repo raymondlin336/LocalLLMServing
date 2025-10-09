@@ -1,9 +1,0 @@
-# Required python packages to launch the app
-
-tkintertools
-sys
-tkinter
-requests
-json
-base64
-psutil
