@@ -4,16 +4,20 @@ import requests
 import json
 
 class SendAndReceive:
-    def __init__(self, url=""):
+    def __init__(self, url="http://127.0.0.1:11434"):  # default stays loopback
         self.message_history = []
         self.selected_model = None
         self.url = url
         self.response_text = ""
-
         self.client_app = None
 
     def set_client_app(self, app):
         self.client_app = app
+
+    # NEW: called by the GUI when user picks a host/port
+    def set_url(self, host: str, port: int):
+        self.url = f"http://{host}:{port}"
+        print(f"=== Server URL set to {self.url}")
 
     def set_model(self, model):
         self.check_vpn()
@@ -36,24 +40,19 @@ class SendAndReceive:
             "model": self.selected_model,
             "messages": self.message_history,
             "stream": True,
-            "options": {
-                "num_predict": -1
-            },
+            "options": {"num_predict": -1},
             "keep_alive": 3600
         }
 
-        #print(payload)
-
         self.message_history.append({"role": "assistant", "content": ""})
         with requests.post(f"{self.url}/api/chat", json=payload, stream=True) as response:
-            #print(response.status_code)
             for line in response.iter_lines(decode_unicode=True):
                 data = json.loads(line)
                 self.message_history[-1]["content"] += data["message"]["content"]
                 if data["message"]["content"] != "" and "<" != data["message"]["content"][0]:
-                    self.client_app.append_and_show_text(data["message"]["content"])
+                    if self.client_app:
+                        self.client_app.append_and_show_text(data["message"]["content"])
                     print(data["message"]["content"], end="")
-
         print()
 
     def check_vpn(self, vpn_path="tailscale-ipn.exe"):
@@ -74,18 +73,19 @@ class SendAndReceive:
             "model": self.selected_model,
             "messages": [{"role": "user", "content": "You are a large language model. The next line will be a user starting a conversation with you, maybe asking a question, etc."}],
             "stream": True,
-            "options": {
-                "num_predict": -1
-            },
+            "options": {"num_predict": -1},
             "keep_alive": 3600
         }
-        r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
-        #print(r.status_code)
-        if r.ok:
-            print("Model receives requests correctly.")
-        else:
-            print("Model is not receiving requests correctly.")
+        try:
+            r = requests.post(f"{self.url}/api/chat", json=payload, stream=True, timeout=10)
+            if r.ok:
+                print("Model receives requests correctly.")
+            else:
+                print("Model is not receiving requests correctly.")
             return r.ok
+        except Exception as e:
+            print(f"Model test failed: {e}")
+            return False
 
     def pull_model(self):
         print("==================== Model Loading")
@@ -94,13 +94,12 @@ class SendAndReceive:
             total = 0
             completed = 0
             for line in response.iter_lines(decode_unicode=True):
-                # print(line)
                 line_dict = json.loads(line)
-                if "total" in line_dict.keys() and line_dict["total"] != total:
+                if "total" in line_dict and line_dict["total"] != total:
                     total = line_dict["total"]
-                if "completed" in line_dict.keys():
+                if "completed" in line_dict:
                     completed = line_dict["completed"]
-                if total != 0:
+                if total:
                     print(f"Loading model: {completed}/{total}, {round(completed / total * 100)}%")
-                if line_dict["status"] == "success":
+                if line_dict.get("status") == "success":
                     print("Model loaded successfully.")
