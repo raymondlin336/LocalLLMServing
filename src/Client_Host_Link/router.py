@@ -3,6 +3,7 @@ import psutil
 import requests
 import json
 from src.HostSide.llm_model import Model
+from src.ClientSide.log import Log
 
 class Router:
     def __init__(self, url=""):
@@ -25,7 +26,7 @@ class Router:
     def send_request_to_model(self, request, img):
         img_path = img.replace("\\", "/")
         if self.selected_model is None:
-            print("Error: model not selected.")
+            Log.print_message("Error: model not selected.")
             return 0
         if img == "":
             self.message_history.append({"role": "user", "content": request})
@@ -58,7 +59,7 @@ class Router:
         print()
 
     def check_vpn(self, vpn_path="tailscale-ipn.exe"):
-        print("==================== Checking VPN connection")
+        Log.print_subtitle("Checking VPN connection")
         for process in psutil.process_iter(["name"]):
             try:
                 if process.info["name"] == vpn_path:
@@ -66,11 +67,11 @@ class Router:
                     return True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-        print("Client side VPN is not running.")
+        Log.print_message("Client side VPN is not running.")
         return False
 
     def check_model(self):
-        print("==================== Model Testing")
+        Log.print_title("MODEL TESTING")
         payload = {
             "model": self.selected_model,
             "messages": [{"role": "user",
@@ -84,13 +85,13 @@ class Router:
         r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
         # print(r.status_code)
         if r.ok:
-            print("Model receives requests correctly.")
+            Log.print_message("Model receives requests correctly.")
         else:
-            print("Model is not receiving requests correctly.")
+            Log.print_message("Model is not receiving requests correctly.")
             return r.ok
 
     def pull_model(self):
-        print("==================== Model Loading")
+        Log.print_title("MODEL LOADING")
         payload = {"model": self.selected_model}
         with requests.post(f"{self.url}/api/pull", json=payload, timeout=1000, stream=True) as response:
             total = 0
@@ -103,9 +104,9 @@ class Router:
                 if "completed" in line_dict.keys():
                     completed = line_dict["completed"]
                 if total != 0:
-                    print(f"Loading model: {completed}/{total}, {round(completed / total * 100)}%")
+                    Log.print_message(f"Loading model: {completed}/{total}, {round(completed / total * 100)}%")
                 if line_dict["status"] == "success":
-                    print("Model loaded successfully.")
+                    Log.print_message("Model loaded successfully.")
 
     def check_available_models(self):
         with requests.get(f"{self.url}/api/tags", timeout=1000) as response:
@@ -113,11 +114,9 @@ class Router:
                 for model in json.loads(line)["models"]:
                     print(model["name"], model["size"])
 
-    def remove_model(self, model_name: str):
+    def unload_all_models(self):
         _, models = Model.load_verified_models()
-        if model_name in models:
-            payload = {"model": model_name}
-            r = requests.delete(f"{self.url}/api/delete", json=payload, timeout=1000)
-            print(r.text)
-        else:
-            print("The chosen model is not currently installed.")
+        for model in models:
+            payload = {"model": model, "prompt": "", "keep_alive": 0}
+            r = requests.post(f"{self.url}/api/chat", json=payload, timeout=1000)
+            Log.print_model_output(r.text)

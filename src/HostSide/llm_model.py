@@ -10,9 +10,18 @@ class Model:
     @staticmethod
     def load_verified_models(json_path="HostSide/verified_models.json"):
         models_json = json.load(open(json_path))
-        model_objects = []
+        model_objects = {}
         model_tags = []
         for m in models_json:
-            model_objects.append(Model(m["Model Tag"], m["Image Compatibility"], m["Function Compatibility"]))
+            model_objects[m["Model Tag"]] = Model(m["Model Tag"], m["Image Compatibility"], m["Function Compatibility"])
             model_tags.append(m["Model Tag"])
         return model_objects, model_tags
+
+    def get_tag(self):
+        return self.model_tag
+
+    def get_use_image(self):
+        return self.use_images
+
+    def get_use_function(self):
+        return self.use_functions
