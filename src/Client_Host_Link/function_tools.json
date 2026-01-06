@@ -32,5 +32,15 @@
         "required": ["location"]
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "web_search",
+      "description": "",
+      "parameters": {
+
+      }
+    }
   }
 ]

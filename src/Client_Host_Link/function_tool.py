@@ -16,9 +16,14 @@ def get_weather_place_id(location: str):
     data = requests.get(url, parameters).json()
     return data
 
+def web_search():
+    # TODO: implement web search algorithm
+    return ""
+
 class FunctionTool:
     function_map = {"get_weather": get_weather,
-                    "get_weather_place_id": get_weather_place_id}
+                    "get_weather_place_id": get_weather_place_id,
+                    "web_search": web_search}
     def __init__(self, name: str, arguments: Dict[str, Any]):
         self.function = self.function_map[name]
         self.kwargs = arguments
