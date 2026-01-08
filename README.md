@@ -13,14 +13,14 @@ This project aims to create a simple and user friendly program that pools comput
 ### Windows 11
 
 Host:
-- Download Tailscale VPN
+- Download Tailscale VPN https://tailscale.com/
 - Sign up / log in
-- Download Ollama
-- Download start-ollama.bat. Modify the file to match the file path to Ollama to the path in your host machine. Modify the port if the current port is occupied.
+- Download Ollama https://ollama.com/download/windows
+- Download start-ollama.bat. (src/HostSide/start-ollama.bat) Modify the file to match the file path to Ollama to the path in your host machine. Modify the port if the current port is occupied.
 - Run start-ollama.bat on the host side
 
 Client:
-- Download Tailscale VPN
+- Download Tailscale VPN https://tailscale.com/
 - Sign up / log in
 
 Launch program:
