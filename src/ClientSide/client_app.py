@@ -1,14 +1,13 @@
+import json
 import sys
 import tkinter as tk
 from tkinter import ttk
-import requests
-import json
 from src.Client_Host_Link.router import Router
 from src.HostSide.llm_model import Model
 from src.ClientSide.log import Log
 
 class ClientApp(tk.Tk):
-    def __init__(self):
+    def __init__(self, models_path):
         # General setup
         super().__init__()
         self.title("Local Helper") # App name
@@ -20,13 +19,14 @@ class ClientApp(tk.Tk):
         self.model_object_dict = {}
         self.model = Model("")
         self.use_fn_calling = tk.BooleanVar(value=False)
+        self.models_path = models_path
+        self.models = []
 
-        # (Optional) make text crisp on high-DPI Windows displays
+        # Improves text on Windows
         if sys.platform.startswith("win"):
             import ctypes
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)  # Per-monitor DPI awareness
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
-        # Forming a new row for search bar and buttons
         row0 = ttk.Frame(self)
         row0.grid(row=0, column=0, sticky="ew", padx=10)
         row0.columnconfigure(0, weight=1)
@@ -54,7 +54,6 @@ class ClientApp(tk.Tk):
         self.model_dropdown.grid(row=1, column=0, sticky="ew", padx=(10, 10), pady=10)
         self.model_dropdown.bind("<<ComboboxSelected>>", self.set_model)
 
-        # Sets up
         self.search_bar = ttk.Entry(row2, font=("Segoe UI", 11))
         self.search_bar.grid(row=2, column=0, sticky="ew", padx=(10, 10), pady=10)
         self.search_bar.bind("<Return>", self.send_request)
@@ -73,14 +72,20 @@ class ClientApp(tk.Tk):
         self.model_output.grid(row=4, column=0, sticky="ew", padx=14, pady=(8, 10))
         self.bind("<Configure>", lambda e: self.model_output.configure(wraplength=e.width - 40))
 
-        # Focus caret into the entry for instant typing
         self.after(100, lambda: (self.search_bar.focus_set(), self.search_bar.icursor("end")))
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-    def load_potential_models(self, model_object_dict: dict[Model], model_tag_list: list[str]):
+    def load_potential_models(self):
+        models_json = json.load(open(self.models_path))
+        model_object_dict = {}
+        model_dropdown = []
+        for m in models_json:
+            model_object_dict[m["Model Tag"]] = Model(m["Model Tag"], m["Image Compatibility"], m["Function Compatibility"])
+            model_dropdown.append(m["Model Tag"])
         self.model_object_dict = model_object_dict
-        self.model_dropdown["values"] = model_tag_list
+        self.models_path = model_dropdown
+        self.model_dropdown["values"] = model_dropdown
 
     def set_model(self, event=None):
         self.router.unload_all_models()
@@ -141,7 +146,6 @@ class ClientApp(tk.Tk):
 
     def on_close(self):
         Log.print_message("Client app is closed.")
-        payload = {"model": self.router.selected_model, "keep_alive": 0}
-        r = requests.post(f"{self.router.url}/api/generate", json=payload, timeout=1000)
+        self.router.unload_all_models()
         Log.print_message("Model unloaded.")
         self.destroy()

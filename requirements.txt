@@ -1,4 +1,4 @@
-# Required python packages to launch the app
+# Required python packages to launch the app (NOT UPDATED)
 
 tkintertools
 sys

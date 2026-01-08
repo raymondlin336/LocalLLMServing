@@ -11,7 +11,6 @@ class Router:
         self.selected_model = None
         self.url = url
         self.response_text = ""
-
         self.client_app = None
 
     def set_client_app(self, app):
@@ -83,7 +82,6 @@ class Router:
             "keep_alive": 3600
         }
         r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
-        # print(r.status_code)
         if r.ok:
             Log.print_message("Model receives requests correctly.")
         else:
@@ -108,14 +106,8 @@ class Router:
                 if line_dict["status"] == "success":
                     Log.print_message("Model loaded successfully.")
 
-    def check_available_models(self):
-        with requests.get(f"{self.url}/api/tags", timeout=1000) as response:
-            for line in response.iter_lines(decode_unicode=True):
-                for model in json.loads(line)["models"]:
-                    print(model["name"], model["size"])
-
     def unload_all_models(self):
-        _, models = Model.load_verified_models()
+        _, models = Model.load_verified_models("HostSide/verified_models.json")
         for model in models:
             payload = {"model": model, "prompt": "", "keep_alive": 0}
             r = requests.post(f"{self.url}/api/chat", json=payload, timeout=1000)

@@ -8,7 +8,7 @@ class Model:
         self.use_functions = use_functions
 
     @staticmethod
-    def load_verified_models(json_path="HostSide/verified_models.json"):
+    def load_verified_models(json_path):
         models_json = json.load(open(json_path))
         model_objects = {}
         model_tags = []

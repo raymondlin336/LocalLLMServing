@@ -52,6 +52,7 @@ class RouterF(Router):
         r = requests.post(f"{self.url}/api/chat", json=payload, stream=False)
         calls = []
         if "tool_calls" in json.loads(r.text)["message"]:
+            Log.print_message(json.loads(r.text)["message"])
             Log.print_message("Function tool called")
             for call in json.loads(r.text)["message"]["tool_calls"]:
                 call_object = FunctionTool(call["function"]["name"], call["function"]["arguments"])

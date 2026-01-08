@@ -39,7 +39,14 @@
       "name": "web_search",
       "description": "",
       "parameters": {
-
+        "type": "object",
+          "properties": {
+            "search_terms": {
+              "type": "string",
+              "description": "Search keywords for web search, such as 'current US president' and 'latest Windows update'"
+            }
+          },
+        "required": ["search_terms"]
       }
     }
   }
