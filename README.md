@@ -6,6 +6,7 @@ This project aims to create a simple and user friendly program that pools comput
 
 - Launch LLMs and send queries from laptop client to a PC
 - Basic UI to choose a model (qwen3:14b) to send and receive requests
+- Implemented conversational context so the model remembers what you just said
 - Implemented function calling features such as web searches and live weather data
 
 ## Set up
