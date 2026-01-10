@@ -1,7 +1,7 @@
 import json
 import requests
 
-class Model:
+class ModelInfo:
     def __init__(self, model_tag, use_images=False, use_functions=False):
         self.model_tag = model_tag
         self.use_images = use_images
@@ -13,7 +13,7 @@ class Model:
         model_objects = {}
         model_tags = []
         for m in models_json:
-            model_objects[m["Model Tag"]] = Model(m["Model Tag"], m["Image Compatibility"], m["Function Compatibility"])
+            model_objects[m["Model Tag"]] = ModelInfo(m["Model Tag"], m["Image Compatibility"], m["Function Compatibility"])
             model_tags.append(m["Model Tag"])
         return model_objects, model_tags
 

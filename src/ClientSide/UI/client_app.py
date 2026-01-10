@@ -1,26 +1,22 @@
-import json
 import sys
 import tkinter as tk
 from tkinter import ttk
-from src.Client_Host_Link.router import Router
-from src.HostSide.llm_model import Model
-from src.ClientSide.log import Log
+from src.ClientSide.Serving.router import Router
+from src.ClientSide.Development.log import Log
 
 class ClientApp(tk.Tk):
-    def __init__(self, models_path):
+    def __init__(self, client_app_info):
         # General setup
         super().__init__()
-        self.title("Local Helper") # App name
+        self.client_app_info = client_app_info
+        self.title("Local Helper")
         self.geometry("700x300")
         self.minsize(400, 300)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(4, weight=1)
-        self.router = Router()
+        self.router = None
         self.model_object_dict = {}
-        self.model = Model("")
         self.use_fn_calling = tk.BooleanVar(value=False)
-        self.models_path = models_path
-        self.models = []
 
         # Improves text on Windows
         if sys.platform.startswith("win"):
@@ -76,21 +72,13 @@ class ClientApp(tk.Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-    def load_potential_models(self):
-        models_json = json.load(open(self.models_path))
-        model_object_dict = {}
-        model_dropdown = []
-        for m in models_json:
-            model_object_dict[m["Model Tag"]] = Model(m["Model Tag"], m["Image Compatibility"], m["Function Compatibility"])
-            model_dropdown.append(m["Model Tag"])
-        self.model_object_dict = model_object_dict
-        self.models_path = model_dropdown
-        self.model_dropdown["values"] = model_dropdown
+        # Get the list of models from the client app info
+        self.model_dropdown["values"] = self.client_app_info.get_model_options()
 
     def set_model(self, event=None):
         self.router.unload_all_models()
         model_tag = self.model_dropdown.get()
-        self.model = self.model_object_dict[model_tag]
+        self.model = self.client_app_info.model_objects_dict[model_tag]
         self.router.set_model(model_tag)
         if self.model.get_use_image():
             self.img_bar.configure(state="normal")
@@ -119,7 +107,7 @@ class ClientApp(tk.Tk):
         Log.print_title("PROCESSING")
         self.clear_text()
 
-        self.router.send_request_to_model(text, img)
+        self.router.send_request(text, [])
 
         self.search_bar.delete(0, "end")
         self.img_bar.delete(0, "end")

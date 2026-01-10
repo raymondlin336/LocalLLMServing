@@ -2,15 +2,18 @@ import base64
 import psutil
 import requests
 import json
-from src.HostSide.llm_model import Model
-from src.ClientSide.log import Log
+from src.ClientSide.Serving.model_info import ModelInfo
+from src.ClientSide.Development.log import Log
+from src.ClientSide.Serving.function_tool import FunctionTool
 
 class Router:
-    def __init__(self, url=""):
+    def __init__(self, url="", tools_path=""):
         self.message_history = []
         self.selected_model = None
         self.url = url
         self.response_text = ""
+        self.tools = json.load(open(tools_path))
+        self.use_tools = True
         self.client_app = None
 
     def set_client_app(self, app):
@@ -22,40 +25,54 @@ class Router:
         self.pull_model()
         self.check_model()
 
-    def send_request_to_model(self, request, img):
-        img_path = img.replace("\\", "/")
+    def send_request(self, request, last_call_tools):
         if self.selected_model is None:
             Log.print_message("Error: model not selected.")
             return 0
-        if img == "":
-            self.message_history.append({"role": "user", "content": request})
-        else:
-            with open(img_path, "rb") as f:
-                img_b64 = base64.b64encode(f.read()).decode("ascii")
-            self.message_history.append({"role": "user", "content": request, "images": [img_b64]})
+
+        self.message_history.append({"role": "user", "content": request})
+        if last_call_tools != []:
+            for use in last_call_tools:
+                self.message_history.append({"role": "tool", "tool_name": use.get_name(), "content": str(use.run())})
+
         payload = {
             "model": self.selected_model,
             "messages": self.message_history,
-            "stream": True,
+            "stream": False,
             "options": {
                 "num_predict": -1
             },
-            "keep_alive": 3600
+            "keep_alive": 3600,
+            "think": False
         }
 
-        # print(payload)
+        # Add tools section to request if function calling is enabled
+        if self.client_app.use_fn_calling.get():
+            payload["tools"] = self.tools
+            Log.print_subtitle(f"New request sent (function calling enabled)")
+        else:
+            Log.print_subtitle(f"New request sent (function calling disabled)")
 
+        # Set up message history, send new request
         self.message_history.append({"role": "assistant", "content": ""})
-        with requests.post(f"{self.url}/api/chat", json=payload, stream=True) as response:
-            # print(response.status_code)
-            for line in response.iter_lines(decode_unicode=True):
-                data = json.loads(line)
-                self.message_history[-1]["content"] += data["message"]["content"]
-                if data["message"]["content"] != "" and "<" != data["message"]["content"][0]:
-                    self.client_app.append_and_show_text(data["message"]["content"])
-                    print(data["message"]["content"], end="")
+        r = requests.post(f"{self.url}/api/chat", json=payload, stream=False)
+        Log.print_message("Model responded")
 
-        print()
+        next_call_tools = []
+        # If function tools were called last round:
+        if "tool_calls" in json.loads(r.text)["message"]:
+            Log.print_message(json.loads(r.text)["message"])
+            Log.print_message("Function tool called")
+            for call in json.loads(r.text)["message"]["tool_calls"]:
+                call_object = FunctionTool(call["function"]["name"], call["function"]["arguments"])
+                next_call_tools.append(call_object)
+            self.send_request("", next_call_tools)
+        # If function tools were not called last round
+        else:
+            output = json.loads(r.text)["message"]["content"]
+            Log.print_title("RESPONSE")
+            Log.print_model_output(output)
+            self.client_app.append_and_show_text(Log.return_model_output(output))
 
     def check_vpn(self, vpn_path="tailscale-ipn.exe"):
         Log.print_subtitle("Checking VPN connection")
@@ -95,7 +112,6 @@ class Router:
             total = 0
             completed = 0
             for line in response.iter_lines(decode_unicode=True):
-                # print(line)
                 line_dict = json.loads(line)
                 if "total" in line_dict.keys() and line_dict["total"] != total:
                     total = line_dict["total"]
@@ -107,7 +123,7 @@ class Router:
                     Log.print_message("Model loaded successfully.")
 
     def unload_all_models(self):
-        _, models = Model.load_verified_models("HostSide/verified_models.json")
+        _, models = ModelInfo.load_verified_models("ClientSide/Serving/verified_models.json")
         for model in models:
             payload = {"model": model, "prompt": "", "keep_alive": 0}
             r = requests.post(f"{self.url}/api/chat", json=payload, timeout=1000)
