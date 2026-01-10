@@ -1,0 +1,53 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "Get current, hourly and daily weather information for a location. get_weather needs a place_id from function get_weather_place_id",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "City or place name, e.g., 'toronto' or 'new york'."
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_weather_place_id",
+      "description": "Get an array of place_id string (among other info) used for the get_weather function, where each place id refers to a particular location. You will need to pick one place_id and use it for the function get_weather.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "City or place name, e.g., 'Toronto, Canada' or 'New York, USA'."
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "web_search",
+      "description": "",
+      "parameters": {
+        "type": "object",
+          "properties": {
+            "search_terms": {
+              "type": "string",
+              "description": "Search keywords for web search, such as 'current US president' and 'latest Windows update'"
+            }
+          },
+        "required": ["search_terms"]
+      }
+    }
+  }
+]

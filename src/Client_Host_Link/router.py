@@ -2,14 +2,15 @@ import base64
 import psutil
 import requests
 import json
+from src.HostSide.llm_model import Model
+from src.ClientSide.log import Log
 
-class SendAndReceive:
+class Router:
     def __init__(self, url=""):
         self.message_history = []
         self.selected_model = None
         self.url = url
         self.response_text = ""
-
         self.client_app = None
 
     def set_client_app(self, app):
@@ -24,7 +25,7 @@ class SendAndReceive:
     def send_request_to_model(self, request, img):
         img_path = img.replace("\\", "/")
         if self.selected_model is None:
-            print("Error: model not selected.")
+            Log.print_message("Error: model not selected.")
             return 0
         if img == "":
             self.message_history.append({"role": "user", "content": request})
@@ -42,11 +43,11 @@ class SendAndReceive:
             "keep_alive": 3600
         }
 
-        #print(payload)
+        # print(payload)
 
         self.message_history.append({"role": "assistant", "content": ""})
         with requests.post(f"{self.url}/api/chat", json=payload, stream=True) as response:
-            #print(response.status_code)
+            # print(response.status_code)
             for line in response.iter_lines(decode_unicode=True):
                 data = json.loads(line)
                 self.message_history[-1]["content"] += data["message"]["content"]
@@ -57,7 +58,7 @@ class SendAndReceive:
         print()
 
     def check_vpn(self, vpn_path="tailscale-ipn.exe"):
-        print("==================== Checking VPN connection")
+        Log.print_subtitle("Checking VPN connection")
         for process in psutil.process_iter(["name"]):
             try:
                 if process.info["name"] == vpn_path:
@@ -65,14 +66,15 @@ class SendAndReceive:
                     return True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-        print("Client side VPN is not running.")
+        Log.print_message("Client side VPN is not running.")
         return False
 
     def check_model(self):
-        print("==================== Model Testing")
+        Log.print_title("MODEL TESTING")
         payload = {
             "model": self.selected_model,
-            "messages": [{"role": "user", "content": "You are a large language model. The next line will be a user starting a conversation with you, maybe asking a question, etc."}],
+            "messages": [{"role": "user",
+                          "content": "You are a large language model. The next line will be a user starting a conversation with you, maybe asking a question, etc."}],
             "stream": True,
             "options": {
                 "num_predict": -1
@@ -80,15 +82,14 @@ class SendAndReceive:
             "keep_alive": 3600
         }
         r = requests.post(f"{self.url}/api/chat", json=payload, stream=True)
-        #print(r.status_code)
         if r.ok:
-            print("Model receives requests correctly.")
+            Log.print_message("Model receives requests correctly.")
         else:
-            print("Model is not receiving requests correctly.")
+            Log.print_message("Model is not receiving requests correctly.")
             return r.ok
 
     def pull_model(self):
-        print("==================== Model Loading")
+        Log.print_title("MODEL LOADING")
         payload = {"model": self.selected_model}
         with requests.post(f"{self.url}/api/pull", json=payload, timeout=1000, stream=True) as response:
             total = 0
@@ -101,6 +102,13 @@ class SendAndReceive:
                 if "completed" in line_dict.keys():
                     completed = line_dict["completed"]
                 if total != 0:
-                    print(f"Loading model: {completed}/{total}, {round(completed / total * 100)}%")
+                    Log.print_message(f"Loading model: {completed}/{total}, {round(completed / total * 100)}%")
                 if line_dict["status"] == "success":
-                    print("Model loaded successfully.")
+                    Log.print_message("Model loaded successfully.")
+
+    def unload_all_models(self):
+        _, models = Model.load_verified_models("HostSide/verified_models.json")
+        for model in models:
+            payload = {"model": model, "prompt": "", "keep_alive": 0}
+            r = requests.post(f"{self.url}/api/chat", json=payload, timeout=1000)
+            Log.print_model_output(r.text)
